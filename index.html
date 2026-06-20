@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ドット絵変換ツール</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>ドット絵変換ツール</h1>
+    <p class="sub">画像を読み込んでドット絵に変換します（処理はすべてブラウザ内で完結します）</p>
+  </header>
+
+  <main class="layout">
+    <!-- 操作パネル -->
+    <aside class="panel">
+      <section class="card">
+        <h2>1. 画像</h2>
+        <div id="dropzone" class="dropzone">
+          <p>ここに画像をドラッグ&ドロップ<br />または</p>
+          <label class="btn">
+            画像を選択
+            <input type="file" id="fileInput" accept="image/*" hidden />
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. ピクセル化</h2>
+        <label class="field">
+          <span>出力の幅（セル数）: <output id="gridSizeOut">64</output></span>
+          <input type="range" id="gridSize" min="8" max="256" step="1" value="64" />
+        </label>
+        <p class="info" id="dimInfo">—</p>
+      </section>
+
+      <section class="card">
+        <h2>3. 減色 / パレット</h2>
+        <label class="field">
+          <span>パレット</span>
+          <select id="paletteMode">
+            <option value="auto">自動（メディアンカット）</option>
+            <option value="gameboy">ゲームボーイ</option>
+            <option value="pico8">PICO-8</option>
+            <option value="nes">NES</option>
+          </select>
+        </label>
+        <label class="field" id="colorCountField">
+          <span>色数: <output id="colorCountOut">16</output></span>
+          <input type="range" id="colorCount" min="2" max="64" step="1" value="16" />
+        </label>
+        <label class="field">
+          <span>ディザリング</span>
+          <select id="dither">
+            <option value="none">なし</option>
+            <option value="floyd">Floyd–Steinberg</option>
+            <option value="bayer">Bayer（オーダード）</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>4. 前処理</h2>
+        <label class="field">
+          <span>明るさ: <output id="brightnessOut">0</output></span>
+          <input type="range" id="brightness" min="-100" max="100" step="1" value="0" />
+        </label>
+        <label class="field">
+          <span>コントラスト: <output id="contrastOut">0</output></span>
+          <input type="range" id="contrast" min="-100" max="100" step="1" value="0" />
+        </label>
+        <label class="field">
+          <span>彩度: <output id="saturationOut">100</output>%</span>
+          <input type="range" id="saturation" min="0" max="200" step="1" value="100" />
+        </label>
+        <button class="btn ghost" id="resetPre" type="button">前処理をリセット</button>
+      </section>
+
+      <section class="card">
+        <h2>5. 書き出し</h2>
+        <label class="field">
+          <span>拡大倍率</span>
+          <select id="exportScale">
+            <option value="1">1x</option>
+            <option value="4">4x</option>
+            <option value="8" selected>8x</option>
+            <option value="16">16x</option>
+            <option value="32">32x</option>
+          </select>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="showGrid" /> グリッド線を入れる
+        </label>
+        <button class="btn primary" id="exportBtn" type="button" disabled>PNG で保存</button>
+      </section>
+    </aside>
+
+    <!-- プレビュー -->
+    <section class="preview">
+      <div class="preview-toolbar">
+        <label class="check">
+          <input type="checkbox" id="showOriginal" /> 元画像を表示
+        </label>
+        <span class="info" id="paletteInfo"></span>
+      </div>
+      <div class="preview-stage" id="stage">
+        <p class="placeholder" id="placeholder">画像を読み込むとここにプレビューが表示されます</p>
+        <canvas id="previewCanvas" hidden></canvas>
+        <img id="originalImg" alt="元画像" hidden />
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
