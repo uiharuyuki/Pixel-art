@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ドット絵変換ツール</title>
+  <link rel="icon" href="data:," />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -183,6 +184,17 @@
     </section>
   </main>
 
+  <script>
+    // file:// で開かれた場合の案内（Module Worker は file:// では動かない）。
+    if (location.protocol === "file:") {
+      document.addEventListener("DOMContentLoaded", function () {
+        var b = document.createElement("div");
+        b.style.cssText = "position:fixed;inset:0;background:#1b1f24;color:#e6eaef;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,sans-serif;z-index:9999";
+        b.innerHTML = "<div><h2>ローカルファイルとして開かれています</h2><p>このツールは Web Worker を使うため <code>file://</code> では動作しません。<br>公開URL（GitHub Pages）か、簡易サーバ経由（<code>python3 -m http.server</code>）で開いてください。</p></div>";
+        document.body.appendChild(b);
+      });
+    }
+  </script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
