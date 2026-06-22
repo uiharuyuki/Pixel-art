@@ -8,107 +8,178 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>ドット絵変換ツール</h1>
-    <p class="sub">画像を読み込んでドット絵に変換します（処理はすべてブラウザ内で完結します）</p>
+    <div>
+      <h1>ドット絵変換ツール</h1>
+      <p class="sub">OKLabベースの高品質変換・透過対応・編集可能パレット（処理はすべてブラウザ内で完結）</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn ghost" id="undo" type="button" title="元に戻す">↶ Undo</button>
+      <button class="btn ghost" id="redo" type="button" title="やり直し">↷ Redo</button>
+    </div>
   </header>
 
   <main class="layout">
-    <!-- 操作パネル -->
     <aside class="panel">
       <section class="card">
         <h2>1. 画像</h2>
         <div id="dropzone" class="dropzone">
-          <p>ここに画像をドラッグ&ドロップ<br />または</p>
-          <label class="btn">
-            画像を選択
-            <input type="file" id="fileInput" accept="image/*" hidden />
-          </label>
+          <p>ドラッグ&ドロップ / 貼り付け、または</p>
+          <label class="btn">画像を選択<input type="file" id="fileInput" accept="image/*" hidden /></label>
         </div>
       </section>
 
       <section class="card">
         <h2>2. ピクセル化</h2>
         <label class="field">
-          <span>出力の幅（セル数）: <output id="gridSizeOut">64</output></span>
-          <input type="range" id="gridSize" min="8" max="256" step="1" value="64" />
+          <span>出力の幅（セル数）: <output id="r_widthOut">64</output></span>
+          <input type="range" id="r_width" min="8" max="256" step="1" value="64" />
         </label>
-        <p class="info" id="dimInfo">—</p>
+        <label class="field">
+          <span>縮小方式</span>
+          <select id="r_method">
+            <option value="average">平均</option>
+            <option value="dominant">最頻色</option>
+            <option value="median">中央値</option>
+            <option value="nearest">最近傍</option>
+          </select>
+        </label>
+        <div class="row">
+          <label class="field half"><span>オフセットX</span><input type="range" id="r_offsetX" min="-8" max="8" step="1" value="0" /></label>
+          <label class="field half"><span>オフセットY</span><input type="range" id="r_offsetY" min="-8" max="8" step="1" value="0" /></label>
+        </div>
+        <button class="btn ghost" id="r_autodetect" type="button">グリッド自動検出</button>
+        <p class="info" id="info">—</p>
       </section>
 
       <section class="card">
         <h2>3. 減色 / パレット</h2>
         <label class="field">
-          <span>パレット</span>
-          <select id="paletteMode">
-            <option value="auto">自動（メディアンカット）</option>
+          <span>モード</span>
+          <select id="q_mode">
+            <option value="auto">自動（OKLab）</option>
+            <option value="preset">プリセット</option>
+            <option value="imported">読み込み</option>
+          </select>
+        </label>
+        <label class="field" id="q_KField">
+          <span>色数: <output id="q_KOut">16</output></span>
+          <input type="range" id="q_K" min="2" max="64" step="1" value="16" />
+        </label>
+        <label class="field" id="q_algoField">
+          <span>アルゴリズム</span>
+          <select id="q_algo">
+            <option value="kmeans">k-means（高品質）</option>
+            <option value="fast">median-cut（高速）</option>
+          </select>
+        </label>
+        <label class="field" id="q_presetField" style="display:none">
+          <span>プリセット</span>
+          <select id="q_preset">
             <option value="gameboy">ゲームボーイ</option>
             <option value="pico8">PICO-8</option>
             <option value="nes">NES</option>
           </select>
         </label>
-        <label class="field" id="colorCountField">
-          <span>色数: <output id="colorCountOut">16</output></span>
-          <input type="range" id="colorCount" min="2" max="64" step="1" value="16" />
-        </label>
+        <label class="btn ghost">パレット読込(.gpl/.hex/画像)<input type="file" id="q_import" accept=".gpl,.hex,.txt,image/*" hidden /></label>
+      </section>
+
+      <section class="card">
+        <h2>4. ディザリング</h2>
         <label class="field">
-          <span>ディザリング</span>
-          <select id="dither">
+          <span>種類</span>
+          <select id="d_type">
             <option value="none">なし</option>
             <option value="floyd">Floyd–Steinberg</option>
             <option value="bayer">Bayer（オーダード）</option>
+            <option value="bluenoise">ブルーノイズ風</option>
           </select>
         </label>
+        <label class="field"><span>強度: <output id="d_strengthOut">100</output></span><input type="range" id="d_strength" min="0" max="100" step="1" value="100" /></label>
+        <label class="field" id="d_matrixField" style="display:none">
+          <span>マトリクス</span>
+          <select id="d_matrix"><option value="2">2×2</option><option value="4" selected>4×4</option><option value="8">8×8</option></select>
+        </label>
+        <label class="check"><input type="checkbox" id="d_serpentine" /> serpentine 走査</label>
       </section>
 
       <section class="card">
-        <h2>4. 前処理</h2>
-        <label class="field">
-          <span>明るさ: <output id="brightnessOut">0</output></span>
-          <input type="range" id="brightness" min="-100" max="100" step="1" value="0" />
-        </label>
-        <label class="field">
-          <span>コントラスト: <output id="contrastOut">0</output></span>
-          <input type="range" id="contrast" min="-100" max="100" step="1" value="0" />
-        </label>
-        <label class="field">
-          <span>彩度: <output id="saturationOut">100</output>%</span>
-          <input type="range" id="saturation" min="0" max="200" step="1" value="100" />
-        </label>
-        <button class="btn ghost" id="resetPre" type="button">前処理をリセット</button>
+        <h2>5. 前処理</h2>
+        <label class="field"><span>明るさ: <output id="p_brightnessOut">0</output></span><input type="range" id="p_brightness" min="-100" max="100" value="0" /></label>
+        <label class="field"><span>コントラスト: <output id="p_contrastOut">0</output></span><input type="range" id="p_contrast" min="-100" max="100" value="0" /></label>
+        <label class="field"><span>彩度: <output id="p_saturationOut">100</output></span><input type="range" id="p_saturation" min="0" max="200" value="100" /></label>
+        <button class="btn ghost" id="p_reset" type="button">前処理をリセット</button>
       </section>
 
       <section class="card">
-        <h2>5. 書き出し</h2>
+        <h2>6. クリーンアップ / 透過</h2>
+        <label class="check"><input type="checkbox" id="c_despeckle" /> 孤立ピクセル除去</label>
+        <label class="field"><span>近似色マージ: <output id="c_mergeOut">0</output></span><input type="range" id="c_merge" min="0" max="20" value="0" /></label>
+        <label class="check"><input type="checkbox" id="c_outline" /> アウトライン</label>
+        <div class="row">
+          <label class="field half"><span>色</span><input type="color" id="c_outline_color" value="#000000" /></label>
+          <label class="field half"><span>幅</span><input type="range" id="c_outline_width" min="1" max="4" value="1" /></label>
+        </div>
         <label class="field">
-          <span>拡大倍率</span>
-          <select id="exportScale">
-            <option value="1">1x</option>
-            <option value="4">4x</option>
-            <option value="8" selected>8x</option>
-            <option value="16">16x</option>
-            <option value="32">32x</option>
-          </select>
+          <span>透過</span>
+          <select id="t_mode"><option value="keep">保持</option><option value="colorkey">カラーキー</option><option value="edge">外周から</option></select>
         </label>
-        <label class="check">
-          <input type="checkbox" id="showGrid" /> グリッド線を入れる
-        </label>
-        <button class="btn primary" id="exportBtn" type="button" disabled>PNG で保存</button>
+        <div id="t_keyField" style="display:none">
+          <div class="row">
+            <label class="field half"><span>キー色</span><input type="color" id="t_key" value="#ffffff" /></label>
+            <label class="field half"><span>許容差: <output id="t_toleranceOut">10</output></span><input type="range" id="t_tolerance" min="0" max="100" value="10" /></label>
+          </div>
+          <label class="check"><input type="checkbox" id="c_defringe" /> フリンジ除去</label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>7. 書き出し</h2>
+        <div class="row">
+          <label class="field half">
+            <span>拡大倍率</span>
+            <select id="e_scale"><option value="1">1x</option><option value="4">4x</option><option value="8" selected>8x</option><option value="16">16x</option><option value="32">32x</option></select>
+          </label>
+          <label class="check"><input type="checkbox" id="e_grid" /> グリッド線</label>
+        </div>
+        <button class="btn primary" id="e_export" type="button" disabled>PNG で保存</button>
+        <button class="btn ghost" id="e_copy" type="button">クリップボードへコピー</button>
+        <div class="row">
+          <button class="btn ghost" id="e_paletteHex" type="button">.hex</button>
+          <button class="btn ghost" id="e_paletteGpl" type="button">.gpl</button>
+          <button class="btn ghost" id="e_palettePng" type="button">PNG列</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>8. プリセット</h2>
+        <div class="row">
+          <input class="text" id="presetName" placeholder="名前" />
+          <button class="btn ghost" id="presetSave" type="button">保存</button>
+        </div>
+        <div class="row">
+          <select id="presetSelect"></select>
+          <button class="btn ghost" id="presetDelete" type="button">削除</button>
+        </div>
       </section>
     </aside>
 
-    <!-- プレビュー -->
     <section class="preview">
       <div class="preview-toolbar">
-        <label class="check">
-          <input type="checkbox" id="showOriginal" /> 元画像を表示
-        </label>
-        <span class="info" id="paletteInfo"></span>
+        <label class="check"><input type="checkbox" id="showOriginal" /> 元画像</label>
+        <div class="zoom">
+          <button class="btn ghost" id="zoomOut" type="button">−</button>
+          <span id="zoomLabel">Fit</span>
+          <button class="btn ghost" id="zoomIn" type="button">＋</button>
+          <button class="btn ghost" id="zoomFit" type="button">Fit</button>
+        </div>
+        <span class="info" id="inspector"></span>
       </div>
       <div class="preview-stage" id="stage">
-        <p class="placeholder" id="placeholder">画像を読み込むとここにプレビューが表示されます</p>
-        <canvas id="previewCanvas" hidden></canvas>
-        <img id="originalImg" alt="元画像" hidden />
+        <p class="placeholder" id="placeholder">画像を読み込むとここにプレビューが表示されます（Ctrl+ホイールでズーム）</p>
+        <canvas id="previewCanvas" class="fit" hidden></canvas>
+        <img id="originalImg" class="fit" alt="元画像" style="display:none" />
       </div>
+      <div class="palette-panel" id="paletteList"></div>
     </section>
   </main>
 
